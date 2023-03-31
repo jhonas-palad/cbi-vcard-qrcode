@@ -1,0 +1,26 @@
+
+.bottom-cbi-text{
+    text-align: center;
+    color: var(--cbi-primary);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.btn-cbi{
+    width: 326px;
+    height: 50px;
+    /* UI Properties */
+    background: var(--cbi-primary) 0% 0% no-repeat padding-box;
+    border-radius: 34px;
+    border-color: transparent;
+    color:#FFFFFFDE;
+    cursor: pointer;
+}
+
+.btn-cbi:disabled{
+    opacity: 0.8;
+    cursor: default;
+}
+.qr-out canvas{
+    transition: all 2s ease;
+}
