@@ -1,5 +1,5 @@
 import React, {useReducer, useCallback} from 'react'
-import { downloadFile, FILETYPES_OPTS } from '../utils';
+import { downloadFile, FILETYPES_OPTS,makeFormat } from '../utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import AddRemoveInput from '../components/AddRemoveInput';
@@ -136,6 +136,10 @@ function QRGenerator () {
         dispatch({type: actionType, payload:{id}})
     }
 
+    const handleGenerateTel = () => {
+        console.log(makeFormat('TEL', state.inputs.telephones));
+    }
+
     return (
         <Container style={{flexGrow:1}} className="body">
                 <h1 style={{fontSize:27, fontWeight:'bold',textAlign: 'center'}}>
@@ -168,9 +172,10 @@ function QRGenerator () {
                     addInput={()=>handleAddInput('ADD_URL')} 
                     removeInput={(id)=>handleRemoveInput(id, 'REMOVE_URL')}
                 />
+                <button onClick={handleGenerateTel}>Generate TEL</button>
                 <div className="flex-col flex flex-center btn-wrapper">
                 {
-                    state.showDownload ? (
+                    !state.showDownload ? (
                         <button 
                         className='btn-cbi' 
                             onClick={()=> dispatch({type:'GENERATEQR'})} 

@@ -19,15 +19,25 @@
 // END:VCARD
 // `
 
-export const VCARD = `
-BEGIN:VCARD
-VERSION:3.0
-N:${lastName};${firstName}
-${telnums}
-${emails}
-ORG:${org}
-TITLE:${title}
-${addresses}
-${urls}
-NOTE:${notes ?? ''}
-`;
+// export const VCARD = `
+// BEGIN:VCARD
+// VERSION:3.0
+// N:${lastName};${firstName}
+// ${telnums}
+// ${emails}
+// ORG:${org}
+// TITLE:${title}
+// ${addresses}
+// ${urls}
+// NOTE:${notes ?? ''}
+// `;
+
+
+export const makeFormat = (format, dataArr) => {
+
+    const formattedData = dataArr.map(({type, value}) => {
+        return `${format}${type ? `;type=${type.toUpperCase()}:`: ':'}${value}`;
+    });
+
+    return formattedData.join('\n');
+}
