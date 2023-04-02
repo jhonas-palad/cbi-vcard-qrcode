@@ -33,6 +33,7 @@
 // `;
 
 
+
 export const makeFormat = (format, dataArr) => {
 
     const formattedData = dataArr.map(({type, value}) => {

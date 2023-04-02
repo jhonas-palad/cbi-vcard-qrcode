@@ -6,13 +6,16 @@ import AddRemoveInput from '../components/AddRemoveInput';
 import QRCode from '../components/QRCode';
 import Container from '../components/Container';
 import ButtonSelect from '../components/ButtonSelect';
+import FormGroup from '../components/FormGroup';
 
 const initState = {
     inputs: {
         addresses: [],
         telephones: [],
         emails: [],
-        urls: []
+        urls: [],
+        fname: '',
+        lname: '',
     },
     toConvert: '',
     fileType: 'png',
@@ -23,8 +26,6 @@ const initState = {
 const reducer = (state, action) => {
     const {type, payload} = action;
     const {inputs} = state;
-
-
     switch(type) {
         case 'REMOVE_ADDRESS':
             //Payload = id
@@ -100,8 +101,12 @@ const reducer = (state, action) => {
             const typeUrls = [...inputs.urls];
             const urlType = typeUrls.find((input)=> input.id === payload.id);
             urlType.type = payload.value;
-            return {...state, inputs: {...inputs,urls: typeUrls}};
-
+            return {...state, inputs: {...inputs, urls: typeUrls}};
+        
+        case 'INPUT_ONCHANGE':
+            const inputUpdatedState = {...inputs};
+            inputUpdatedState[payload.id] = payload.value;
+            return {...state, inputs: inputUpdatedState }
         case 'CHANGE_FILE_TYPE':
             return {
                 ...state,
@@ -125,21 +130,36 @@ function QRGenerator () {
         const generatedQRCodeRef = document.getElementById("generated_qrcode");
         state.toConvert && downloadFile(generatedQRCodeRef, uuidv4(), fileType ?? state.fileType);
     }, [state.fileType, state.toConvert]);
-    const handleChangeInput = (e, actionType) => {
+
+    const handleChangeInput = useCallback((e, actionType) => {
         const {id, value} = e.target;
         dispatch({type:actionType, payload: {id, value}});
-    }
-    const handleAddInput = (actionType) => {
+    }, []);
+    const handleAddInput = useCallback((actionType) => {
         dispatch({type: actionType, payload: {id: uuidv4(), type:'', value:''}})
-    }
-    const handleRemoveInput = (id, actionType) => {
+    }, []);
+    const handleRemoveInput = useCallback((id, actionType) => {
         dispatch({type: actionType, payload:{id}})
-    }
+    }, []);
+    const handleGenerateFormat = () => {
+        const {lname, fname, telephones, addresses, urls, emails} = state.inputs;
+        const formattedTelNums = makeFormat('TEL', telephones);
+        const formattedAddresses = makeFormat('ADDR', addresses);
+        const formattedUrls = makeFormat('URL', urls);
+        const formattedEmails = makeFormat('EMAIL', emails);
+        const vCardFormat = `
+BEGIN:VCARD
+VERSION:3.0
+N:${lname};${fname}
+${formattedTelNums}
+${formattedEmails}
+${formattedAddresses}
+${formattedUrls}
+END:VCARD
+`;
 
-    const handleGenerateTel = () => {
-        console.log(makeFormat('TEL', state.inputs.telephones));
+        console.log(vCardFormat);
     }
-
     return (
         <Container style={{flexGrow:1}} className="body">
                 <h1 style={{fontSize:27, fontWeight:'bold',textAlign: 'center'}}>
@@ -147,7 +167,23 @@ function QRGenerator () {
                     GENERATOR
                 </h1>
                 <div className='container'>
-                <QRCode value={"ASDdsfsdfad"} hidden={!state.toConvert}/>
+                <div style={{gap:'1em'}} className='flex flex-row'>
+                    <FormGroup
+                        id="fname"
+                        label="First Name"
+                        name="fname"
+                        value={state.inputs.fname}
+                        onChange={(e)=>handleChangeInput(e,'INPUT_ONCHANGE')}
+
+                    />
+                    <FormGroup
+                        id="lname"
+                        label="Last Name"
+                        name="lname"
+                        value={state.inputs.lname}
+                        onChange={(e)=>handleChangeInput(e,'INPUT_ONCHANGE')}
+                    />
+                </div>
                 <AddRemoveInput
                     title="Telephone" 
                     container={state.inputs.telephones}
@@ -172,7 +208,8 @@ function QRGenerator () {
                     addInput={()=>handleAddInput('ADD_URL')} 
                     removeInput={(id)=>handleRemoveInput(id, 'REMOVE_URL')}
                 />
-                <button onClick={handleGenerateTel}>Generate TEL</button>
+                <button onClick={handleGenerateFormat}>Generate TEL</button>
+                <QRCode value={"ASDdsfsdfad"} hidden={!state.toConvert}/>
                 <div className="flex-col flex flex-center btn-wrapper">
                 {
                     !state.showDownload ? (
