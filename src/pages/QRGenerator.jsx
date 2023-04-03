@@ -7,11 +7,14 @@ import QRCode from '../components/QRCode';
 import Container from '../components/Container';
 import ButtonSelect from '../components/ButtonSelect';
 import FormGroup from '../components/FormGroup';
+import InputRemoveSelect from '../components/InputRemoveSelect';
 
 const initState = {
     inputs: {
         addresses: [],
-        telephones: [],
+        telephones: [
+            {id: 'work', value: '', type: 'work', _default: true},
+        ],
         emails: [],
         urls: [],
         fname: '',
@@ -141,23 +144,16 @@ function QRGenerator () {
     const handleRemoveInput = useCallback((id, actionType) => {
         dispatch({type: actionType, payload:{id}})
     }, []);
+
+    console.log(state);
     const handleGenerateFormat = () => {
         const {lname, fname, telephones, addresses, urls, emails} = state.inputs;
-        const formattedTelNums = makeFormat('TEL', telephones);
-        const formattedAddresses = makeFormat('ADDR', addresses);
-        const formattedUrls = makeFormat('URL', urls);
-        const formattedEmails = makeFormat('EMAIL', emails);
-        const vCardFormat = `
-BEGIN:VCARD
-VERSION:3.0
-N:${lname};${fname}
-${formattedTelNums}
-${formattedEmails}
-${formattedAddresses}
-${formattedUrls}
-END:VCARD
-`;
-
+        
+        const formattedTelNums = telephones.length ? makeFormat('TEL', telephones) + '\n' : '';
+        const formattedAddresses = addresses.length ? makeFormat('ADDR', addresses) + '\n' : '';
+        const formattedUrls = urls.length ? makeFormat('URL', urls)+ '\n' : '';
+        const formattedEmails = emails.length ? makeFormat('EMAIL', emails) + '\n' : '';
+        const vCardFormat = `BEGIN:VCARD\nVERSION:3.0\nN:${lname};${fname}\n${formattedTelNums}${formattedEmails}${formattedAddresses}${formattedUrls}END:VCARD`;
         console.log(vCardFormat);
     }
     return (
@@ -184,14 +180,26 @@ END:VCARD
                         onChange={(e)=>handleChangeInput(e,'INPUT_ONCHANGE')}
                     />
                 </div>
-                <AddRemoveInput
-                    title="Telephone" 
-                    container={state.inputs.telephones}
-                    onChangeType={(e)=>handleChangeInput(e, 'UPDATE_TELEPHONE_TYPE')}
-                    onChange={(e)=>handleChangeInput(e, 'UPDATE_TELEPHONE_INPUT')}
-                    addInput={()=>handleAddInput('ADD_TELEPHONE')} 
-                    removeInput={(id)=>handleRemoveInput(id, 'REMOVE_TELEPHONE')}
-                />
+                <div>
+                    <h3>
+                        Telephone
+                    </h3>
+                    <InputRemoveSelect
+                        type="work"
+                        id="work"
+                        value={state.inputs.telephones[0].value}
+                        onChangeType={(e)=>handleChangeInput(e, 'UPDATE_TELEPHONE_TYPE')}
+                        onChange={(e)=>handleChangeInput(e, 'UPDATE_TELEPHONE_INPUT')}
+                    />
+                    <AddRemoveInput
+                        labels={["mobile","phone","fax"]}
+                        container={state.inputs.telephones}
+                        onChangeType={(e)=>handleChangeInput(e, 'UPDATE_TELEPHONE_TYPE')}
+                        onChange={(e)=>handleChangeInput(e, 'UPDATE_TELEPHONE_INPUT')}
+                        addInput={()=>handleAddInput('ADD_TELEPHONE')} 
+                        removeInput={(id)=>handleRemoveInput(id, 'REMOVE_TELEPHONE')}
+                    />
+                </div>
                 <AddRemoveInput
                     title="Email" 
                     container={state.inputs.emails}
@@ -208,6 +216,9 @@ END:VCARD
                     addInput={()=>handleAddInput('ADD_URL')} 
                     removeInput={(id)=>handleRemoveInput(id, 'REMOVE_URL')}
                 />
+                <div className="flex-col flex">
+
+                </div>
                 <button onClick={handleGenerateFormat}>Generate TEL</button>
                 <QRCode value={"ASDdsfsdfad"} hidden={!state.toConvert}/>
                 <div className="flex-col flex flex-center btn-wrapper">
