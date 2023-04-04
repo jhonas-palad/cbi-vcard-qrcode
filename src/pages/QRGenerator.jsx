@@ -8,6 +8,7 @@ import Container from '../components/Container';
 import ButtonSelect from '../components/ButtonSelect';
 import FormGroup from '../components/FormGroup';
 import InputRemoveSelect from '../components/InputRemoveSelect';
+import AddressAddRemoveInput from '../components/AddressAddRemoveInput';
 
 const initState = {
     inputs: {
@@ -36,12 +37,13 @@ const reducer = (state, action) => {
             return {...state,inputs: {...inputs,addresses: removedAddresses}}
         case 'ADD_ADDRESS':
             //Payload = {id, type, value}
-            return {...state,inputs: {...inputs,addresses: [...inputs.addresses, payload]}}
+            const newAddress = {id:payload.id, type: '', street: '', city: '', zip: '', state: '', country: ''}
+            return {...state, inputs: {...inputs,addresses: [...inputs.addresses, newAddress]}}
         case 'UPDATE_ADDRESS_INPUT':
-            //Payload = {id, value}
+            //Payload = {id,name, value}
             const inputAddresses = [...inputs.addresses];
             const addressInput = inputAddresses.find((input)=> input.id === payload.id);
-            addressInput.value = payload.value;
+            addressInput.name = payload.value;
             return {...state, inputs: {...inputs,addresses: inputAddresses}};
         case 'UPDATE_ADDRESS_TYPE':
             const typeAddresses = [...inputs.addresses];
@@ -116,11 +118,24 @@ const reducer = (state, action) => {
                 fileType: action.value
             }
         case 'GENERATEQR':
+            const {lname, fname, telephones, addresses, urls, emails} = state.inputs;
+            const formattedTelNums = telephones.length ? makeFormat('TEL', telephones) + '\n' : '';
+            const formattedAddresses = addresses.length ? makeFormat('ADDR', addresses) + '\n' : '';
+            const formattedUrls = urls.length ? makeFormat('URL', urls)+ '\n' : '';
+            const formattedEmails = emails.length ? makeFormat('EMAIL', emails) + '\n' : '';
+            const vCardFormat = `BEGIN:VCARD\nVERSION:3.0\nN:${lname};${fname}\n${formattedTelNums}${formattedEmails}${formattedAddresses}${formattedUrls}END:VCARD`;
+        
+            console.log(vCardFormat);
             return {
                 ...state, 
-                toConvert: state.urlInput,
+                toConvert: vCardFormat,
                 showDownload: true
             };
+        case 'RESET_STATE':
+            return {
+                ...state,
+                ...initState
+            }
         default:
             throw new Error();
     }
@@ -135,8 +150,8 @@ function QRGenerator () {
     }, [state.fileType, state.toConvert]);
 
     const handleChangeInput = useCallback((e, actionType) => {
-        const {id, value} = e.target;
-        dispatch({type:actionType, payload: {id, value}});
+        const {id, name, value} = e.target;
+        dispatch({type:actionType, payload: {id, name, value}});
     }, []);
     const handleAddInput = useCallback((actionType) => {
         dispatch({type: actionType, payload: {id: uuidv4(), type:'', value:''}})
@@ -144,18 +159,6 @@ function QRGenerator () {
     const handleRemoveInput = useCallback((id, actionType) => {
         dispatch({type: actionType, payload:{id}})
     }, []);
-
-    console.log(state);
-    const handleGenerateFormat = () => {
-        const {lname, fname, telephones, addresses, urls, emails} = state.inputs;
-        
-        const formattedTelNums = telephones.length ? makeFormat('TEL', telephones) + '\n' : '';
-        const formattedAddresses = addresses.length ? makeFormat('ADDR', addresses) + '\n' : '';
-        const formattedUrls = urls.length ? makeFormat('URL', urls)+ '\n' : '';
-        const formattedEmails = emails.length ? makeFormat('EMAIL', emails) + '\n' : '';
-        const vCardFormat = `BEGIN:VCARD\nVERSION:3.0\nN:${lname};${fname}\n${formattedTelNums}${formattedEmails}${formattedAddresses}${formattedUrls}END:VCARD`;
-        console.log(vCardFormat);
-    }
     return (
         <Container style={{flexGrow:1}} className="body">
                 <h1 style={{fontSize:27, fontWeight:'bold',textAlign: 'center'}}>
@@ -217,18 +220,22 @@ function QRGenerator () {
                     removeInput={(id)=>handleRemoveInput(id, 'REMOVE_URL')}
                 />
                 <div className="flex-col flex">
-
+                    <AddressAddRemoveInput 
+                        container={state.inputs.addresses}
+                        addInput={()=>handleAddInput('ADD_ADDRESS')}
+                        removeInput={(id) => handleRemoveInput(id, 'REMOVE_ADDRESS')}
+                        onChange={(e)=>handleChangeInput('UPDATE_ADDRESS_INPUT')}
+                    />
                 </div>
-                <button onClick={handleGenerateFormat}>Generate TEL</button>
-                <QRCode value={"ASDdsfsdfad"} hidden={!state.toConvert}/>
+                {/* <button onClick={handleGenerateFormat}>Generate TEL</button> */}
+                <QRCode includeMargin level='L' value={state.toConvert} hidden={!state.toConvert}/>
                 <div className="flex-col flex flex-center btn-wrapper">
                 {
                     !state.showDownload ? (
                         <button 
                         className='btn-cbi' 
                             onClick={()=> dispatch({type:'GENERATEQR'})} 
-                            type="button"
-                            disabled={!state.urlInput}>
+                            type="button">
                                 Generate
                         </button>
                     ) : (
@@ -244,7 +251,7 @@ function QRGenerator () {
                                 }
                                 btnClick={()=>downloadQRCode(state.fileType)}
                             />
-                            <a className='label' href={window.location.href}>Generate another QR code</a>
+                            <button className='label' onClick={()=>dispatch({type:'RESET_STATE'})}>Generate another QR code</button>
                         </>
                     )
                 }
