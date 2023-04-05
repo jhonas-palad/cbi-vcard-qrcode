@@ -9,10 +9,22 @@ import ButtonSelect from '../components/ButtonSelect';
 import FormGroup from '../components/FormGroup';
 import InputRemoveSelect from '../components/InputRemoveSelect';
 import AddressAddRemoveInput from '../components/AddressAddRemoveInput';
+import ADRInputRemoveSelect from '../components/ADRInputRemoveSelect';
 
 const initState = {
     inputs: {
-        addresses: [],
+        addresses: [
+            {
+                id: uuidv4(),
+                street: '',
+                city: '',
+                state: '',
+                zip: '4232',
+                country: 'Philippines',
+                type: '',
+                pref: 1
+            }
+        ],
         telephones: [
             {id: 'work', value: '', type: 'work', _default: true},
         ],
@@ -37,13 +49,13 @@ const reducer = (state, action) => {
             return {...state,inputs: {...inputs,addresses: removedAddresses}}
         case 'ADD_ADDRESS':
             //Payload = {id, type, value}
-            const newAddress = {id:payload.id, type: '', street: '', city: '', zip: '', state: '', country: ''}
+            const newAddress = {id:payload.id, type: '', street: '', city: '', zip: '4232', state: '', country: 'Philippines'}
             return {...state, inputs: {...inputs,addresses: [...inputs.addresses, newAddress]}}
         case 'UPDATE_ADDRESS_INPUT':
             //Payload = {id,name, value}
             const inputAddresses = [...inputs.addresses];
             const addressInput = inputAddresses.find((input)=> input.id === payload.id);
-            addressInput.name = payload.value;
+            addressInput[payload.name] = payload.value;
             return {...state, inputs: {...inputs,addresses: inputAddresses}};
         case 'UPDATE_ADDRESS_TYPE':
             const typeAddresses = [...inputs.addresses];
@@ -119,17 +131,19 @@ const reducer = (state, action) => {
             }
         case 'GENERATEQR':
             const {lname, fname, telephones, addresses, urls, emails} = state.inputs;
-            const formattedTelNums = telephones.length ? makeFormat('TEL', telephones) + '\n' : '';
-            const formattedAddresses = addresses.length ? makeFormat('ADDR', addresses) + '\n' : '';
-            const formattedUrls = urls.length ? makeFormat('URL', urls)+ '\n' : '';
-            const formattedEmails = emails.length ? makeFormat('EMAIL', emails) + '\n' : '';
-            const vCardFormat = `BEGIN:VCARD\nVERSION:3.0\nN:${lname};${fname}\n${formattedTelNums}${formattedEmails}${formattedAddresses}${formattedUrls}END:VCARD`;
+            const FN = makeFormat('FN', {fname, mname: 'Olfato', lname});
+            const N = makeFormat('N', {lname, fname});
+            const formattedTelNums = telephones.length ? makeFormat('TEL', telephones) + '\r\n' : '';
+            const formattedAddresses = addresses.length ? makeFormat('ADR', addresses) + '\r\n' : '';
+            const formattedUrls = urls.length ? makeFormat('URL', urls)+ '\r\n' : '';
+            const formattedEmails = emails.length ? makeFormat('EMAIL', emails) + '\r\n' : '';
+            const vCardFormat = `BEGIN:VCARD\r\nVERSION:3.0\r\n${FN}${N}${formattedTelNums}${formattedEmails}${formattedAddresses}${formattedUrls}END:VCARD`;
         
             console.log(vCardFormat);
             return {
-                ...state, 
+                ...state,
+                showDownload:true,
                 toConvert: vCardFormat,
-                showDownload: true
             };
         case 'RESET_STATE':
             return {
@@ -159,6 +173,7 @@ function QRGenerator () {
     const handleRemoveInput = useCallback((id, actionType) => {
         dispatch({type: actionType, payload:{id}})
     }, []);
+    console.log(state);
     return (
         <Container style={{flexGrow:1}} className="body">
                 <h1 style={{fontSize:27, fontWeight:'bold',textAlign: 'center'}}>
@@ -220,15 +235,51 @@ function QRGenerator () {
                     removeInput={(id)=>handleRemoveInput(id, 'REMOVE_URL')}
                 />
                 <div className="flex-col flex">
+                    <ADRInputRemoveSelect 
+                        {...state.inputs.addresses[0]}
+                        onChange={(e)=>handleChangeInput(e, 'UPDATE_ADDRESS_INPUT')}
+
+                    />
                     <AddressAddRemoveInput 
                         container={state.inputs.addresses}
                         addInput={()=>handleAddInput('ADD_ADDRESS')}
                         removeInput={(id) => handleRemoveInput(id, 'REMOVE_ADDRESS')}
-                        onChange={(e)=>handleChangeInput('UPDATE_ADDRESS_INPUT')}
+                        onChange={(e)=>handleChangeInput(e,'UPDATE_ADDRESS_INPUT')}
                     />
                 </div>
                 {/* <button onClick={handleGenerateFormat}>Generate TEL</button> */}
-                <QRCode includeMargin level='L' value={state.toConvert} hidden={!state.toConvert}/>
+                
+                <QRCode 
+                    includeMargin 
+                    level='L' 
+value={`BEGIN:VCARD
+VERSION:3.0
+FN;CHARSET=UTF-8:Jhonas Olfato Palad
+N;CHARSET=UTF-8:Palad;Jhonas;Olfato;Jr;Ma
+NICKNAME;CHARSET=UTF-8:Nasty
+GENDER:O
+UID;CHARSET=UTF-8:67
+BDAY:19220101
+EMAIL;CHARSET=UTF-8;type=HOME,INTERNET:jhonasemmanuel@gmail.com
+EMAIL;CHARSET=UTF-8;type=WORK,INTERNET:jhonasemmanuel@gmail.com
+TEL;TYPE=CELL:vcxv
+TEL;TYPE=PAGER:q
+TEL;TYPE=HOME,VOICE:9394961849
+TEL;TYPE=WORK,VOICE:123123
+TEL;TYPE=HOME,FAX:qe
+TEL;TYPE=WORK,FAX:rf
+LABEL;CHARSET=UTF-8;TYPE=HOME:166
+ADR;CHARSET=UTF-8;TYPE=HOME:;;122 Sala;Tanauan;Batangas;4232;Philippines
+ROLE;CHARSET=UTF-8:CTO
+ORG;CHARSET=UTF-8:Imis
+TITLE;CHARSET=UTF-8:POQWOP
+NOTE;CHARSET=UTF-8:4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj
+X-SOCIALPROFILE;TYPE=facebook:facebook.com
+X-SOCIALPROFILE;TYPE=linkedin:5342
+REV:2023-04-04T12:40:45.828Z
+END:VCARD`}
+                    // hidden={!state.toConvert}
+                />
                 <div className="flex-col flex flex-center btn-wrapper">
                 {
                     !state.showDownload ? (
