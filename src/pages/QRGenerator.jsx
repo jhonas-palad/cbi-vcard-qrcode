@@ -1,9 +1,10 @@
-import React, {useReducer, useCallback} from 'react'
+import React, {useReducer, useRef, useCallback} from 'react'
 import { downloadFile, FILETYPES_OPTS,makeFormat } from '../utils';
 import { v4 as uuidv4 } from 'uuid';
 
 import AddRemoveInput from '../components/AddRemoveInput';
-import QRCode from '../components/QRCode';
+// import QRCode from '../components/QRCode';
+import {QRCode} from 'react-qrcode-logo';
 import Container from '../components/Container';
 import ButtonSelect from '../components/ButtonSelect';
 import FormGroup from '../components/FormGroup';
@@ -31,7 +32,12 @@ const initState = {
         emails: [],
         urls: [],
         fname: '',
+        mname: '',
         lname: '',
+        org: '',
+        title: '',
+        role: '',
+        
     },
     toConvert: '',
     fileType: 'png',
@@ -158,8 +164,10 @@ const reducer = (state, action) => {
 
 function QRGenerator () {
     const [state, dispatch] = useReducer(reducer, initState);
+    const qrRef = useRef(null);
     const downloadQRCode = useCallback((fileType) => {
-        const generatedQRCodeRef = document.getElementById("generated_qrcode");
+        const generatedQRCodeRef = qrRef.current.canvas.current;
+        console.log(generatedQRCodeRef)
         state.toConvert && downloadFile(generatedQRCodeRef, uuidv4(), fileType ?? state.fileType);
     }, [state.fileType, state.toConvert]);
 
@@ -182,6 +190,7 @@ function QRGenerator () {
                 </h1>
                 <div className='container'>
                 <div style={{gap:'1em'}} className='flex flex-row'>
+                    
                     <FormGroup
                         id="fname"
                         label="First Name"
@@ -191,10 +200,41 @@ function QRGenerator () {
 
                     />
                     <FormGroup
+                        id="mname"
+                        label="Middle Name"
+                        name="mname"
+                        value={state.inputs.mname}
+                        onChange={(e)=>handleChangeInput(e, 'INPUT_ONCHANGE')}
+                    />
+                    <FormGroup
                         id="lname"
                         label="Last Name"
                         name="lname"
                         value={state.inputs.lname}
+                        onChange={(e)=>handleChangeInput(e,'INPUT_ONCHANGE')}
+                    />
+
+                </div>
+                <div style={{gap:'1em'}} className='flex flex-row'>
+                    <FormGroup
+                        id="org"
+                        label="Organization"
+                        name="org"
+                        value={state.inputs.org}
+                        onChange={(e)=>handleChangeInput(e,'INPUT_ONCHANGE')}
+                    />
+                    <FormGroup
+                        id="title"
+                        label="Title"
+                        name="title"
+                        value={state.inputs.title}
+                        onChange={(e)=>handleChangeInput(e,'INPUT_ONCHANGE')}
+                    />
+                    <FormGroup
+                        id="role"
+                        label="Role"
+                        name="role"
+                        value={state.inputs.role}
                         onChange={(e)=>handleChangeInput(e,'INPUT_ONCHANGE')}
                     />
                 </div>
@@ -248,38 +288,20 @@ function QRGenerator () {
                     />
                 </div>
                 {/* <button onClick={handleGenerateFormat}>Generate TEL</button> */}
-                
-                <QRCode 
-                    includeMargin 
-                    level='L' 
-value={`BEGIN:VCARD
-VERSION:3.0
-FN;CHARSET=UTF-8:Jhonas Olfato Palad
-N;CHARSET=UTF-8:Palad;Jhonas;Olfato;Jr;Ma
-NICKNAME;CHARSET=UTF-8:Nasty
-GENDER:O
-UID;CHARSET=UTF-8:67
-BDAY:19220101
-EMAIL;CHARSET=UTF-8;type=HOME,INTERNET:jhonasemmanuel@gmail.com
-EMAIL;CHARSET=UTF-8;type=WORK,INTERNET:jhonasemmanuel@gmail.com
-TEL;TYPE=CELL:vcxv
-TEL;TYPE=PAGER:q
-TEL;TYPE=HOME,VOICE:9394961849
-TEL;TYPE=WORK,VOICE:123123
-TEL;TYPE=HOME,FAX:qe
-TEL;TYPE=WORK,FAX:rf
-LABEL;CHARSET=UTF-8;TYPE=HOME:166
-ADR;CHARSET=UTF-8;TYPE=HOME:;;122 Sala;Tanauan;Batangas;4232;Philippines
-ROLE;CHARSET=UTF-8:CTO
-ORG;CHARSET=UTF-8:Imis
-TITLE;CHARSET=UTF-8:POQWOP
-NOTE;CHARSET=UTF-8:4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj4ghjtyuj
-X-SOCIALPROFILE;TYPE=facebook:facebook.com
-X-SOCIALPROFILE;TYPE=linkedin:5342
-REV:2023-04-04T12:40:45.828Z
-END:VCARD`}
-                    // hidden={!state.toConvert}
+                <QRCode
+                    ref={qrRef}
+                    logoImage={require('../assets/images/logo.png')}
+                    removeQrCodeBehindLogo
+                    eyeRadius={4}
+                    value={`BEGIN:VCARD\r\nVERSION:3.0\r\nEND:VCARD`}
+                    qrStyle="square"
+                    eyeColor="#ED184B"
+                    quietZone={15}
+                    size={256}
+                    fgColor="#ED184B"
+                    bgColor="white"
                 />
+                
                 <div className="flex-col flex flex-center btn-wrapper">
                 {
                     !state.showDownload ? (
