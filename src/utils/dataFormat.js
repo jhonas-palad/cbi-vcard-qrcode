@@ -7,7 +7,7 @@ const escapeChars = (str, searchValue = /,|;/g, newValue = (ch) => `\\${ch}`) =>
 }
 
 
-export const FN_Format = (fname, mname, lname ) => {
+export const FN_Format = (fname, lname, mname="" ) => {
     const cleanFname = escapeChars(fname);
     const cleanMname = escapeChars(mname);
     const cleanLname = escapeChars(lname);
@@ -22,6 +22,14 @@ export const N_Format = (fname, lname , honorificPrefixes = [], honorificSuffixe
     const strHonorificSuffixes = honorificSuffixes.map((str) => escapeChars(str)).join(',');
     return `N:${cleanLname};${cleanFname};${strHonorificPrefixes};${strHonorificSuffixes}\r\n`;
 }
+
+
+export const ORG_Format = (value) => `ORG:${escapeChars(value)}\r\n`;
+
+export const TITLE_Format = (value) => `TITLE:${escapeChars(value)}\r\n`;
+
+export const ROLE_Format = (value) => `ROLE:${escapeChars(value)}\r\n`;
+
 
 export const ADR_Format = (street, city, state, zip, country,type, pref = false) => {
     const params = `${pref ? ';PREF=1' : ''}${type ? `;${type}` : ''}`;
@@ -49,14 +57,14 @@ export const TEL_Format = (type, value) => {
 
 */
     const params = `${type ? ';TYPE=' + type: ''}`;
-    return `TEL${params}:${value}`;
+    return `TEL${params}:${escapeChars(value)}`;
 }
 
 export const URL_Format = (value) => {
-    return `URL:${value}`;
+    return `URL:${escapeChars(value)}`;
 }
 
-export const EMAIL_Format = (type, value) => {
+export const EMAIL_Format = (value ) => {
 /*  
     TYPE parameter values can include:
         -internet : indicate an Internet addressing type
@@ -66,9 +74,12 @@ export const EMAIL_Format = (type, value) => {
     can also be specified.
 */
     // const params = `${type ? 'TYPE=' + type: ''}`;
-    return `EMAIL:${value}`;
+    return `EMAIL:${escapeChars(value)}`;
 }
 
+export const X_SOCIAL_PROFILE_Format = (type, value) => {
+    return `X-SOCIAL-PROFILE:${escapeChars(value)}`;
+}
 export const makeFormat = (format, data) => {
     /* 
     Parameter values MAY be case-sensitive or case-insensitive, 
@@ -76,22 +87,36 @@ export const makeFormat = (format, data) => {
     the same as "FN" and "Fn"). It is RECOMMENDED that property and
     parameter names be upper-case on output.
     */
+
+    console.log(format);
     switch (format) {
         case 'FN':
-            return FN_Format(data.fname, data.mname, data.lname);
+            return FN_Format(data.fname, data.lname);
         case 'N':
-            return N_Format(data.lname,data.fname, data.honorificPrefixes, data.honorificSuffixes);
+            return N_Format(data.lname,data.fname);
+        case 'ORG':
+            return ORG_Format(data);
+        case 'TITLE':
+            return TITLE_Format(data);
+        case 'ROLE':
+            return ROLE_Format(data);
         case 'ADR':
             return data.map(({street, city, state, zip, country, type, pref}) => 
                 ADR_Format(street, city, state, zip, country, type, pref)).join('\r\n');
-        case 'TEL':
+        case 'TELS':
             return data.map( ({type, value}) => TEL_Format(type, value)).join('\r\n');
+        case 'TEL':
+            return TEL_Format('',data) + '\r\n';
         case 'URL':
-            return data.map( ({value}) => URL_Format(value)).join('\r\n');
-            
+            return data.map(({value}) => URL_Format(value)).join('\r\n');
+        case 'EMAILS':
+            return data.map(({type, value}) => EMAIL_Format(type, value)).join('\r\n');
         case 'EMAIL':
-            return data.map( ({type, value}) => EMAIL_Format(type, value)).join('\r\n');
-            
+            return EMAIL_Format(data) + '\r\n';
+        case 'X-SOCIAL-PROFILES':
+            return data.map(({type, value}) => X_SOCIAL_PROFILE_Format(type, value)).join('\r\n');
+        case 'X-SOCIAL-PROFILE':
+            return X_SOCIAL_PROFILE_Format('',data)
         default:
             break;
     }
