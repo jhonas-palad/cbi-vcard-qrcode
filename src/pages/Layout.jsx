@@ -15,7 +15,7 @@ const Layout = () => {
                 </Container>
                 {/* <NavLinks/> */}
                 <QRGenerator />
-                <Container className="footer">
+                <Container style={{marginBotton: '3em'}} className="footer">
                     <p className='bottom-cbi-text'>
                         Center for Business and Innovation <br/>
                         INSPIRE, INNOVATE, IMMERSE

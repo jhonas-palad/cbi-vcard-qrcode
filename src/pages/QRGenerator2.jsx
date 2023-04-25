@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Container from '../components/Container';
 import ButtonSelect from '../components/ButtonSelect';
 import FormGroup from '../components/FormGroup';
-import { QRCode } from 'react-qrcode-logo';
+import * as QRCode from 'easyqrcodejs';
 
 const initState = {
     inputs: {
@@ -73,6 +73,11 @@ const reducer = (state, action) => {
                 showDownload:true,
                 toConvert: vCardFormat,
             };
+        case 'SHOW_DL':
+            return {
+                ...state,
+                showDownload: true
+            }
         case 'RESET_STATE':
             Object.keys(initState.inputs).map(name => {initState.inputs[name].value = ''});
             return {...initState}
@@ -106,70 +111,85 @@ function QRGenerator () {
         dispatch({type:'ADD_INPUT', payload:{name, label}})
         setOptionalBtn(prev => prev.filter( opt => opt.name !== name))
     },[optionalBtn]);
+
+    const createQR = useCallback(()=> {
+        const {fname, lname, cellphone, email ,company, designation, linkedin, instagram, facebook, twitter, youtube, landline} = state.inputs;
+        const v = (entity) => { if (!entity) return ''; else return entity.value}; 
+        const FN = v(fname) || v(lname) ? makeFormat('FN', {fname : v(fname), lname: v(lname)}) : '';
+        const N = v(lname) || v(fname) ? makeFormat('N', {lname : v(lname), fname : v(fname)}) : '';
+        const ORG = v(company) ? makeFormat('ORG', v(company)) : '';
+        const EMAIL = v(email) ? makeFormat('EMAIL', v(email)) : '';
+        const TEL = v(cellphone) ? makeFormat('TEL', v(cellphone)) : '';
+        const TITLE = v(designation) ? makeFormat('TITLE', v(designation)) : '';
+        const LANDLINE = v(landline) ? makeFormat('TEL',  v(landline)) : '';
+        const X_SOCIAL_LINKEDIN = v(linkedin) ? makeFormat('X-SOCIAL-PROFILE', {type:'linkedin', value: v(linkedin)} ) : ''
+        const X_SOCIAL_INSTAGRAM = v(instagram) ? makeFormat('X-SOCIAL-PROFILE', {type:'instagram', value: v(instagram)} ) : ''
+        const X_SOCIAL_FACEBOOK = v(facebook) ? makeFormat('X-SOCIAL-PROFILE', {type:'facebook', value: v(facebook)} ) : ''
+        const X_SOCIAL_TWITTER = v(twitter) ? makeFormat('X-SOCIAL-PROFILE', {type:'twitter', value: v(twitter)} ) : ''
+        const X_SOCIAL_YOUTUBE = v(youtube) ? makeFormat('X-SOCIAL-PROFILE', {type:'youtube', value: v(youtube)} ) : ''
+        const vCardFormat = `BEGIN:VCARD\r\nVERSION:3.0\r\n${FN}${N}${ORG}${TITLE}${TEL}${LANDLINE}${EMAIL}${X_SOCIAL_LINKEDIN}${X_SOCIAL_INSTAGRAM}${X_SOCIAL_FACEBOOK}${X_SOCIAL_TWITTER}${X_SOCIAL_YOUTUBE}END:VCARD`;
+
+        const options = {
+            text: vCardFormat,
+            quietZone: 15
+        }
+        new QRCode(canvasRef.current, options)
+
+        dispatch({type:'SHOW_DL'});
+        
+    }, [state]);
+
+    
     return (
         <Container style={{flexGrow:1}} className="body">
             <h1 style={{fontSize:27, fontWeight:'bold',textAlign: 'center'}}>
                 VCARD<br/>
                 GENERATOR
             </h1>
-            <div className='container'>
-                
+            <div className={`container ${state.showDownload ? 'hide' : ''}`}>
                 {
-                    !state.showDownload && !state.toConvert ? (
-                        <>
-                        {
-                            Object.keys(state.inputs).map((name) => {
-                                const {label, value} = state.inputs[name];
-                                return (
-                                    <FormGroup
-                                        key={name}
-                                        id={name}
-                                        name={name}
-                                        label={label}
-                                        value={value}
-                                        onChange={(e)=>handleChangeInput(e, 'INPUT_ONCHANGE')}
-                                    />
-                                )
-                            })
-                        }
-                        {
-                            optionalBtn.map(({name, label})=>{
-                                return (
-                                    <button
-                                        key={name}
-                                        className='box add-container-btn flex flex-center'
-                                        onClick={()=>handleHideBtn(name, label)}
-                                    >
-                                        + Add {label}
-                                    </button>
-                                )
-                            })
-                        }
-                        </>
-                    ) : (
-                        <QRCode 
-                            ref={canvasRef}
-                            size={256}
-                            value={state.toConvert}
-                        />
-                    )
+                    Object.keys(state.inputs).map((name) => {
+                        const {label, value} = state.inputs[name];
+                        return (
+                            <FormGroup
+                                key={name}
+                                id={name}
+                                name={name}
+                                label={label}
+                                value={value}
+                                onChange={(e)=>handleChangeInput(e, 'INPUT_ONCHANGE')}
+                            />
+                        )
+                    })
+                }
+                {
+                    optionalBtn.map(({name, label})=>{
+                        return (
+                            <button
+                                key={name}
+                                className='box add-container-btn flex flex-center'
+                                onClick={()=>handleHideBtn(name, label)}
+                            >
+                                + Add {label}
+                            </button>
+                        )
+                    })
                 }
             </div>
-            
+            <div className='flex flex-center' id="canvas-ref" ref={canvasRef}></div>
             <div className="flex-col flex flex-center btn-wrapper">
             {
                 !state.showDownload ? (
                     <button
-                        style={{margin: '3em 0 2em'}}
+                        style={{margin: '5em 0 2em'}}
                         className='btn-cbi' 
-                        onClick={()=>dispatch({type: 'GENERATEQR'})} 
+                        onClick={createQR} 
                         type="button">
                             Generate
                     </button>
                 ) : (
                     <>
-                        <ButtonSelect
-                            style={{margin: '2.5em 0 1em'}}
+                        <ButtonSelect 
                             title="Download"
                             opts={FILETYPES_OPTS}
                             optClick={
@@ -180,10 +200,10 @@ function QRGenerator () {
                             }
                             btnClick={()=>downloadQRCode(state.fileType)}
                         />
-                        <button style={{border: 'none', background: 'transparent', cursor:'pointer'}} className='label' onClick={handleResetState}>Generate another QR code</button>
-                        {/* <a className='label' href={window.location.href}>
+                        {/* <button className='label' onClick={handleResetState}>Generate another QR code</button> */}
+                        <a className='label' href={window.location.href}>
                             Generate another QR code
-                        </a> */}
+                        </a>
                     </>
                 )
             }

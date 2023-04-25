@@ -12,7 +12,7 @@ export const FILE_TYPES = {
 
 export const getCanvas = (refElement, ext)=>{
 
-    const qrCanvas = refElement ? refElement : document.getElementById('generated_qrcode');
+    const qrCanvas = refElement ? refElement : document.getElementById('generated_qrcode');    
     let url;
     if(ext === 'svg'){
         //convert canvas to svg
@@ -41,7 +41,7 @@ export const getCanvas = (refElement, ext)=>{
 
 export const downloadFile = async (refElement, filename, ext = 'png') => {
     const newFileName = `${filename}.${ext}`;
-    
+    // getCanvas(refElement, ext)
     return getCanvas(refElement, ext).then(
       url => {
         const anchorTag = document.createElement("a");

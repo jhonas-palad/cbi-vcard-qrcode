@@ -78,7 +78,7 @@ export const EMAIL_Format = (value ) => {
 }
 
 export const X_SOCIAL_PROFILE_Format = (type, value) => {
-    return `X-SOCIAL-PROFILE:${escapeChars(value)}`;
+    return `X-SOCIALPROFILE;TYPE=${type}:${escapeChars(value)}`;
 }
 export const makeFormat = (format, data) => {
     /* 
@@ -87,8 +87,6 @@ export const makeFormat = (format, data) => {
     the same as "FN" and "Fn"). It is RECOMMENDED that property and
     parameter names be upper-case on output.
     */
-
-    console.log(format);
     switch (format) {
         case 'FN':
             return FN_Format(data.fname, data.lname);
@@ -116,7 +114,7 @@ export const makeFormat = (format, data) => {
         case 'X-SOCIAL-PROFILES':
             return data.map(({type, value}) => X_SOCIAL_PROFILE_Format(type, value)).join('\r\n');
         case 'X-SOCIAL-PROFILE':
-            return X_SOCIAL_PROFILE_Format('',data)
+            return X_SOCIAL_PROFILE_Format(data.type, data.value) + '\r\n';
         default:
             break;
     }
