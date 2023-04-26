@@ -81,12 +81,22 @@ const reducer = (state, action) => {
     }
 }
 
+const createFileName = (fname, lname) => {
+    let filename;
+    if (!fname && !lname) {
+        filename = 'No name';
+    }
+    else{
+        filename = fname && lname ? `${fname} ${lname}` : (fname && !lname) ? fname : lname;
+    }
+    return filename;
+}
 function QRGenerator () {
     const [state, dispatch] = useReducer(reducer, initState);
     const canvasRef = useRef(null);
     const downloadQRCode = useCallback((fileType) => {
         const generatedQRCodeRef = canvasRef.current.canvas.current;
-        state.toConvert && downloadFile(generatedQRCodeRef, uuidv4(), fileType ?? state.fileType);
+        state.toConvert && downloadFile(generatedQRCodeRef, createFileName(state.inputs.fname.value, state.inputs.lname.value), fileType ?? state.fileType);
     }, [state.fileType, state.toConvert]);
 
     const [optionalBtn, setOptionalBtn] = useState(optionalInputs);
