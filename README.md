@@ -1,4 +1,4 @@
-# CBI vCard4.0 QRCODE Generator
+# CBI vCard3.0 QRCODE Generator
 
 
 ## vCard Format Specification
